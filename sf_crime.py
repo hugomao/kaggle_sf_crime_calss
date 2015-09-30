@@ -6,10 +6,10 @@ from sklearn.ensemble import AdaBoostClassifier
 from dateutil.parser import parse
 from sklearn import svm
 from sklearn import linear_model
+from sklearn.ensemble import BaggingClassifier
 
-
-data = pd.read_csv("/Users/janghoo/Documents/kaggle project/criminal classification/kaggle_sf_crime/train.csv")
-data2 = pd.read_csv("/Users/janghoo/Documents/kaggle project/criminal classification/kaggle_sf_crime/test.csv")
+data = pd.read_csv("/Users/janghoo/Documents/kaggle project/criminal classification/data/train.csv")
+data2 = pd.read_csv("/Users/janghoo/Documents/kaggle project/criminal classification/data/test.csv")
 
 def calculate(x):
     return parse(x).year,parse(x).month,parse(x).day,parse(x).hour
@@ -40,17 +40,19 @@ data2_2 = pd.merge(data2_1,dist_df,on = 'PdDistrict',how = 'left')
 
 y_train = list(data_2.Category)
 x1_train = list(zip(data_2.X,data_2.Y,data_2.year,data_2.month,data_2.day,data_2.hour))
-x2_train = [0]*len(x1)
+x2_train = [0]*len(x1_train)
 for i in range(0,len(x1_train)):
     x2_train[i]= list(x1_train[i])+data_2['dow'][i]+data_2['dis'][i]
 
-clf1 = RandomForestClassifier(n_estimators=100)
-clf2 = AdaBoostClassifier(n_estimators=100)
-clf3 = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,max_depth=1, random_state=0)
+clf1 = RandomForestClassifier(n_estimators=50)
+clf2 = AdaBoostClassifier(n_estimators=50)
+clf3 = GradientBoostingClassifier(n_estimators=50, learning_rate=1.0,max_depth=1, random_state=0)
 clf4 = svm.SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
 gamma=0.5, kernel='poly',degree = 2, max_iter=-1, probability=False, random_state=None,
 shrinking=True, tol=0.001, verbose=False )  #svm
 clf5 = linear_model.LogisticRegression()#logit
+clf4 = BaggingClassifier(clf4,max_samples=0.7, max_features=1.0,n_estimators=20)
+clf5 = BaggingClassifier(clf5,max_samples=0.7, max_features=1.0,n_estimators=20)
 
 
 clf1 = clf1.fit(x2_train, y_train)
@@ -58,4 +60,18 @@ clf2 = clf2.fit(x2_train, y_train)
 clf3 = clf3.fit(x2_train, y_train)
 clf4 = clf4.fit(x2_train, y_train)
 clf5 = clf5.fit(x2_train, y_train)
+
+x1_test = list(zip(data2_2.X,data2_2.Y,data2_2.year,data2_2.month,data2_2.day,data2_2.hour))
+x2_test = [0]*len(x1_test)
+for i in range(0,len(x1_test)):
+    x2_test[i]= list(x1_test[i])+data2_2['dow'][i]+data2_2['dis'][i]
+
+
+r1 = clf1.predict_proba(x2_test)
+r2 = clf2.predict_proba(x2_test)
+r3 = clf3.predict_proba(x2_test)
+r4 = clf4.predict_proba(x2_test)
+r5 = clf5.predict_proba(x2_test)
+
+
 
